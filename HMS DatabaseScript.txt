@@ -1,0 +1,386 @@
+USE HOSPITAL;
+DROP TABLE Patient;
+CREATE TABLE Patient(
+  idPatient VARCHAR(20) NOT NULL,
+  Name VARCHAR(50) NULL,
+  File_No INT NULL,
+  Phone_No VARCHAR(13) NULL,
+  Address VARCHAR(45) NULL,
+  Sex INT  NULL,
+  DOB DATE NULL,
+  Name_NOK VARCHAR(50) NULL,
+  Contact_NOK VARCHAR(13) NULL,
+  NOK_Relationship VARCHAR(45) NULL,
+  Email VARCHAR(45) NULL,
+  PRIMARY KEY (idPatient));
+CREATE TABLE Department(
+  idDepartment INT NOT NULL,
+  department_description VARCHAR(45) NULL,
+  PRIMARY KEY (idDepartment));
+CREATE TABLE Ward(
+  idWard INT NOT NULL,
+  ward_description VARCHAR(45) NULL,
+  id_department INT NULL,
+  PRIMARY KEY (idWard),
+  INDEX id_department_idx (id_department ASC),
+  CONSTRAINT id_department
+    FOREIGN KEY (id_department)
+    REFERENCES HOSPITAL.Department(idDepartment)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION);
+CREATE TABLE Ward(
+  idWard INT NOT NULL,
+  ward_description VARCHAR(45) NULL,
+  id_department INT NULL,
+  PRIMARY KEY (idWard),
+  CONSTRAINT id_department
+    FOREIGN KEY (id_department)
+    REFERENCES Department(idDepartment)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION);
+CREATE INDEX id_department_idx ON Ward(id_department);
+CREATE TABLE Bed(
+  idBed INT NOT NULL,
+  id_department INT NULL,
+  id_ward INT NULL,
+  bed_status INT NULL,
+  PRIMARY KEY (idBed),
+  CONSTRAINT id_department
+    FOREIGN KEY (id_department)
+    REFERENCES Department(idDepartment)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT id_ward
+    FOREIGN KEY (id_ward)
+    REFERENCES Ward(idWard)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION);
+CREATE INDEX id_department_idx ON Bed(id_department),
+CREATE INDEX id_ward_idx ON Bed(id_ward);=====idDepartment couldnt add
+CREATE TABLE Visit(
+  idVisit INT NOT NULL,
+  patientID VARCHAR(20) NULL,
+  visit_date DATE NULL,
+  doctorID VARCHAR(20) NULL,
+  procedureID INT NULL,
+  visit_type INT NULL,
+  time TIME NULL,
+  Bed_idBed INT NOT NULL,
+  PRIMARY KEY (idVisit),
+  CONSTRAINT fk2_patientID
+    FOREIGN KEY (patientID)
+    REFERENCES Patient(idPatient)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT fk_Visit_Bed1
+    FOREIGN KEY (Bed_idBed)
+    REFERENCES Bed(idBed)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION);
+CREATE INDEX patientID_idx ON Visit(patientID);
+CREATE INDEX fk_Visit_Bed1_idx ON Visit (Bed_idBed);
+CREATE TABLE Doctor(
+  idDoctor VARCHAR(20) NOT NULL,
+  doctor_name VARCHAR(50) NULL,
+  specialisation VARCHAR(45) NULL,
+  doctor_contact VARCHAR(13) NULL,
+  doctor_email VARCHAR(45) NULL,
+  departmentID INT NULL,
+  PRIMARY KEY (idDoctor),
+  CONSTRAINT departmentID
+    FOREIGN KEY (departmentID)
+    REFERENCES Department(idDepartment)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION);
+CREATE INDEX departmentID_idx ON Doctor(departmentID);
+CREATE TABLE Visit_has_Doctor(
+  Visit_idVisit INT NOT NULL,
+  Doctor_idDoctor VARCHAR(20) NOT NULL,
+  PRIMARY KEY (Visit_idVisit, Doctor_idDoctor),
+  CONSTRAINT fk_Visit_has_Doctor_Visit1
+    FOREIGN KEY (Visit_idVisit)
+    REFERENCES Visit(idVisit)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT fk_Visit_has_Doctor_Doctor1
+    FOREIGN KEY (Doctor_idDoctor)
+    REFERENCES Doctor(idDoctor)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION);
+CREATE TABLE Operation(
+  idprocedure INT NOT NULL,
+  procedure_description VARCHAR(100) NULL,
+  procedure_cost DECIMAL NULL,
+  PRIMARY KEY (idprocedure));// Procedure Table has been renamed to Operation
+CREATE TABLE Visit_has_Operation (
+  Visit_idVisit INT NOT NULL,
+  procedure_idprocedure INT NOT NULL,
+  PRIMARY KEY (Visit_idVisit, procedure_idprocedure),
+  CONSTRAINT fk_Visit_has_procedure_Visit1
+    FOREIGN KEY (Visit_idVisit)
+    REFERENCES Visit(idVisit)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT fk_Visit_has_procedure_procedure1
+    FOREIGN KEY (procedure_idprocedure)
+    REFERENCES Operation (idprocedure)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION);
+CREATE INDEX fk_Visit_has_procedure_procedure1_idx ON Visit_has_Operation (procedure_idprocedure);
+CREATE INDEX fk_Visit_has_procedure_Visit1_idx ON Visit_has_Operation (Visit_idVisit);// Visit_has_Procedure has been renamed to Visit_has_Operation
+
+CREATE TABLE Operation_has_Doctor(
+  procedure_idprocedure INT NOT NULL,
+  Doctor_idDoctor VARCHAR(20) NOT NULL,
+  PRIMARY KEY (procedure_idprocedure, Doctor_idDoctor),
+  CONSTRAINT fk_procedure_has_Doctor_procedure1
+    FOREIGN KEY (procedure_idprocedure)
+    REFERENCES Operation(idprocedure)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT fk_procedure_has_Doctor_Doctor1
+    FOREIGN KEY (Doctor_idDoctor)
+    REFERENCES Doctor (idDoctor)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION);
+CREATE INDEX fk_procedure_has_Doctor_Doctor1_idx ON Operation_has_Doctor (Doctor_idDoctor);
+CREATE INDEX fk_procedure_has_Doctor_procedure1_idx ON Operation_has_Doctor (procedure_idprocedure);
+//Procedure_has_Doctor>> revised to Operation_has_Doctor
+CREATE TABLE Users(
+  idUser VARCHAR(20) NOT NULL,
+  name VARCHAR(50) NULL,
+  departmentID INT NULL,
+  email VARCHAR(45) NULL,
+  user_contact VARCHAR(13) NULL,
+  PRIMARY KEY (idUser),
+  CONSTRAINT fk_departmentID
+    FOREIGN KEY (departmentID)
+    REFERENCES Department(idDepartment)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION);
+CREATE INDEX departmentID_idx ON Users(departmentID); 
+CREATE TABLE Pharmacy(
+  idDrug INT NOT NULL,
+  drug_description VARCHAR(45) NULL,
+  quantity DECIMAL NULL,
+  userID VARCHAR(20) NULL,
+  drug_cost DECIMAL NULL,
+  PRIMARY KEY (idDrug),
+  CONSTRAINT userID
+    FOREIGN KEY (userID)
+    REFERENCES Users (idUser)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION);
+CREATE INDEX userID_idx ON Pharmacy(userID);
+CREATE TABLE Prescription(
+  idPrescription INT NOT NULL,
+  quantity DECIMAL NULL,
+  prescription_description VARCHAR(45) NULL,
+  patientID VARCHAR(20) NULL,
+  userID VARCHAR(20) NULL,
+  visitID INT NULL,
+  Prescriptioncol VARCHAR(45) NULL,
+  PRIMARY KEY (idPrescription),
+  CONSTRAINT fk_patientID
+    FOREIGN KEY (patientID)
+    REFERENCES Patient (idPatient)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT visitID
+    FOREIGN KEY (visitID)
+    REFERENCES Visit (idVisit)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT fk_userID
+    FOREIGN KEY (userID)
+    REFERENCES Users(idUser)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION);
+CREATE INDEX patientID_idx ON Prescription(patientID);
+CREATE INDEX visitID_idx ON  Prescription(visitID);
+CREATE INDEX userID_idx ON Prescription (userID);
+CREATE TABLE Doctor_has_Prescription (
+  Doctor_idDoctor VARCHAR(20) NOT NULL,
+  Prescription_idPrescription INT NOT NULL,
+  PRIMARY KEY (Doctor_idDoctor, Prescription_idPrescription),
+  CONSTRAINT fk_Doctor_has_Prescription_Doctor1
+    FOREIGN KEY (Doctor_idDoctor)
+    REFERENCES Doctor (idDoctor)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT fk_Doctor_has_Prescription_Prescription1
+    FOREIGN KEY (Prescription_idPrescription)
+    REFERENCES Prescription (idPrescription)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION);
+CREATE TABLE Prescription_has_Pharmacy (
+  Prescription_idPrescription INT NOT NULL,
+  Pharmacy_idDrug INT NOT NULL,
+  PRIMARY KEY (Prescription_idPrescription, Pharmacy_idDrug),
+  CONSTRAINT fk_Prescription_has_Pharmacy_Prescription1
+    FOREIGN KEY (Prescription_idPrescription)
+    REFERENCES Prescription (idPrescription)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT fk_Prescription_has_Pharmacy_Pharmacy1
+    FOREIGN KEY (Pharmacy_idDrug)
+    REFERENCES Pharmacy(idDrug)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION);
+CREATE INDEX fk_Prescription_has_Pharmacy_Pharmacy1_idx ON Prescription_has_Pharmacy (Pharmacy_idDrug);
+CREATE INDEX fk_Prescription_has_Pharmacy_Prescription1_idx ON Prescription_has_Pharmacy (Prescription_idPrescription);
+CREATE TABLE Lab_header(
+  idLab_header INT NOT NULL,
+  userID VARCHAR(20) NULL,
+  visitID INT NULL,
+  lab_test_date DATE NULL,
+  lab_test_time TIME NULL,
+  PRIMARY KEY (idLab_header),
+  CONSTRAINT fk2_userID
+    FOREIGN KEY (userID)
+    REFERENCES Users (idUser)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT fk_visitID
+    FOREIGN KEY (visitID)
+    REFERENCES Visit(idVisit)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION);
+CREATE INDEX userID_idx ON Lab_header (userID);
+CREATE INDEX visitID_idx ON Lab_header (visitID);
+CREATE TABLE Radio_Image(
+  idRadio_Image INT NOT NULL,
+  visitID INT NULL,
+  imageObservation VARCHAR(200) NOT NULL,
+  userID VARCHAR(20) NULL,
+  image_date DATETIME NULL,
+  PRIMARY KEY (idRadio_Image),
+CONSTRAINT fk2_visitID
+    FOREIGN KEY (visitID)
+    REFERENCES Visit (idVisit)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT fk3_userID
+    FOREIGN KEY (userID)
+    REFERENCES Users(idUser)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION);
+CREATE INDEX visitID_idx ON Radio_Image (visitID);
+CREATE INDEX userID_idx ON Radio_Image (userID);
+CREATE TABLE UOM(
+  idUOM VARCHAR(20) NOT NULL,
+  UOM_description VARCHAR(45) NULL,
+  quantity_per_UOM DECIMAL NULL,
+  PRIMARY KEY (idUOM));
+CREATE TABLE UOM_has_Pharmacy (
+  UOM_idUOM VARCHAR(20) NOT NULL,
+  Pharmacy_idDrug INT NOT NULL,
+  PRIMARY KEY (UOM_idUOM, Pharmacy_idDrug),
+  CONSTRAINT fk_UOM_has_Pharmacy_UOM1
+    FOREIGN KEY (UOM_idUOM)
+    REFERENCES UOM(idUOM)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT fk_UOM_has_Pharmacy_Pharmacy1
+    FOREIGN KEY (Pharmacy_idDrug)
+    REFERENCES Pharmacy(idDrug)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION);
+CREATE INDEX fk_UOM_has_Pharmacy_Pharmacy1_idx ON UOM_has_Pharmacy (Pharmacy_idDrug);
+CREATE INDEX fk_UOM_has_Pharmacy_UOM1_idx ON UOM_has_Pharmacy (UOM_idUOM);
+CREATE TABLE Lab_test_lines (
+  idLab_test_lines INT NOT NULL,
+  Lab_test_reagentID INT NULL,
+  Lab_test_time TIME NULL,
+  Lab_test_drug_quantity DECIMAL NULL,
+  Lab_test_UOM VARCHAR(20) NULL,
+  Lab_test_cost DECIMAL NULL,
+  PRIMARY KEY (idLab_test_lines),
+  CONSTRAINT Lab_test_reagentID
+    FOREIGN KEY (Lab_test_reagentID)
+    REFERENCES Pharmacy(idDrug)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION);
+CREATE  INDEX Lab_test_reagentID_idx ON Lab_test_lines (Lab_test_reagentID);
+CREATE  INDEX Lab_test_UOM_idx ON Lab_test_lines (Lab_test_UOM);
+=============================================================
+CONSTRAINT fk_Lab_test_UOM
+    FOREIGN KEY (Lab_test_UOM)
+    REFERENCES UOM_has_Pharmacy(UOM_idUOM)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)>> Couldnt execute this constraint on Lab_test_lines table
+================================================================
+CREATE TABLE Lab_test_results (
+  idLab_test INT NOT NULL,
+  Lab_test_description VARCHAR(255) NULL,
+  Lab_headerID INT NULL,
+  Lab_test_linesID INT NULL,
+  PRIMARY KEY (idLab_test),
+  CONSTRAINT Lab_test_linesID
+    FOREIGN KEY (Lab_test_linesID)
+    REFERENCES Lab_test_lines(idLab_test_lines)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT Lab_headerID
+    FOREIGN KEY (Lab_headerID)
+    REFERENCES Lab_header(idLab_header)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION);
+CREATE INDEX Lab_test_linesID_idx ON Lab_test_results(Lab_test_linesID);
+CREATE INDEX Lab_headerID_idx ON Lab_test_results(Lab_headerID);
+CREATE TABLE Triage (
+  idTriage INT NOT NULL,
+  height DECIMAL NULL,
+  mass DECIMAL NULL,
+  blood_pressure DECIMAL NULL,
+  Triagecol VARCHAR(45) NULL,
+  Visit_idVisit INT NOT NULL,
+  checkup_cost DECIMAL NULL,
+  PRIMARY KEY (idTriage, Visit_idVisit),
+  CONSTRAINT fk_Triage_Visit1
+    FOREIGN KEY (Visit_idVisit)
+    REFERENCES Visit(idVisit)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION);
+CREATE INDEX fk_Triage_Visit1_idx ON Triage (Visit_idVisit);
+CREATE TABLE Address (
+  idAddress INT NOT NULL,
+  contact VARCHAR(13) NULL,
+  Address1 VARCHAR(45) NULL,
+  Address2 VARCHAR(45) NULL,
+  patientID VARCHAR(20) NOT NULL,
+  PRIMARY KEY (idAddress, patientID),
+  CONSTRAINT fk_Address_Patient1
+    FOREIGN KEY (patientID)
+    REFERENCES Patient (idPatient)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION);
+CREATE INDEX fk_Address_Patient1_idx ON Address(patientID);
+CREATE TABLE Diagnosis (
+  idDiagnosis INT NOT NULL,
+  diagnosis_description VARCHAR(100) NULL,
+  doctorID VARCHAR(20) NOT NULL,
+  PRIMARY KEY (idDiagnosis, doctorID),
+  CONSTRAINT fk_Diagnosis_Doctor1
+    FOREIGN KEY (doctorID)
+    REFERENCES Doctor(idDoctor)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION);
+CREATE INDEX fk_Diagnosis_Doctor1_idx ON Diagnosis (doctorID);
+CREATE TABLE Diagnosis_has_Visit(
+  Diagnosis_idDiagnosis INT NOT NULL,
+  Diagnosis_doctorID VARCHAR(20) NOT NULL,
+  Visit_idVisit INT NOT NULL,
+  PRIMARY KEY (Diagnosis_idDiagnosis, Diagnosis_doctorID, Visit_idVisit),
+  CONSTRAINT fk_Diagnosis_has_Visit_Diagnosis1
+    FOREIGN KEY (Diagnosis_idDiagnosis , Diagnosis_doctorID)
+    REFERENCES Diagnosis (idDiagnosis , doctorID)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT fk_Diagnosis_has_Visit_Visit1
+    FOREIGN KEY (Visit_idVisit)
+    REFERENCES Visit(idVisit)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION);
+CREATE INDEX fk_Diagnosis_has_Visit_Visit1_idx ON Diagnosis_has_Visit(Visit_idVisit);
+CREATE INDEX fk_Diagnosis_has_Visit_Diagnosis1_idx ON Diagnosis_has_Visit(Diagnosis_idDiagnosis, Diagnosis_doctorID);
